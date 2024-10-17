@@ -54,3 +54,10 @@ the following:
 |  |- tables
 |
 ~~~
+
+# Important global variables
+
+- `DATA_PATH`: path to root of data folder
+- `RAW_DATA_PATH`: path to location of raw data (data supplied by Katharina)
+- `FIGURES_PATH`: path to location of all output figures
+- `TABLES_PATH`: path to location of all output tables
