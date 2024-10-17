@@ -61,7 +61,7 @@ make_type_rules <- function(fields, type_str) {
 
 validate_data <- function(data, rules, on_error = "stop") {
   result <- confront(data, rules)
-  invalid_rows <- violating_rows(result)
+  invalid_rows <- violating_rows(result, data)
   val <- tidy_validation(result, rules)
   if (any(invalid_rows$wch_row)) {
     saveRDS(invalid_rows$violating,
@@ -84,7 +84,7 @@ validate_data <- function(data, rules, on_error = "stop") {
   }
 }
 
-violating_rows <- function(result) {
+violating_rows <- function(result, data) {
   s <- summary(result)
   wch <- which(s$items > 1 & s$fails > 1)
   if (length(wch) == 0) {
