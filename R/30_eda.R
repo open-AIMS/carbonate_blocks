@@ -14,9 +14,10 @@ dat <- readRDS(paste0(DATA_PATH, "processed/dat.rds"))
 eda_plot <- function(dat, response, covariate, pth) {
   err <- try(
   {
+    print(response)
     gg <-
       dat |>
-      ggplot(aes(x = covariate, y = response)) +
+      ggplot(aes(x = !!sym(covariate), y = !!sym(response))) +
       geom_point() +
       theme_classic()
     saveRDS(gg, file = pth)
@@ -26,7 +27,7 @@ eda_plot <- function(dat, response, covariate, pth) {
   if (inherits(err, "try-error")) {
     return(NA)
   } else {
-    return(pth)
+    return(gg)
   }
 }
 ## ----end
@@ -56,6 +57,21 @@ eda <- eda |>
       eda_plot(dat, response = response, covariate = covariate, pth = pth)
     }
   )) |>
+  mutate(fig = pmap(    ## save ggplot figures to disc
+    .l = list(
+      response = responses,
+      covariate = covariates,
+      gg = gg
+    ),
+    .f = ~ {
+      response <- ..1
+      covariate <- ..2
+      gg <- ..3
+      pth <- paste0(FIGURES_PATH, "eda_", response, "_by_", covariate, ".png")
+      ggsave(filename = pth, plot = gg, width = 10, height = 7, units = "in", dpi = 300)
+      ggsave(filename = str_replace(pth, ".png", ".pdf"), plot = gg, width = 10, height = 7, units = "in")
+    }
+  )) |> 
   mutate(cap = pmap( ## generate figure caption
     .l = list(
       response = responses,
