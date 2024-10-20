@@ -207,3 +207,4 @@ validation_results$violating |>
 #| cache: false
 ```
 
+# Exploratory data analysis
