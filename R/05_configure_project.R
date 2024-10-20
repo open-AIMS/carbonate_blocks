@@ -1,7 +1,7 @@
 ## ---- load_libraries
 library(tidyverse)
 library(validate)
-source("processing_functions.R")
+source("../R/processing_functions.R")
 ## ----end
 
 ## ---- define global variables

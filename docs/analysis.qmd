@@ -1,0 +1,209 @@
+---
+title: Erosion and accretion of carbonate blocks 
+author: 
+  - name: "Diego Barneche"
+  - name: "Julie Vercelloni"
+  - name: "Murray Logan"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+format: 
+  html:
+    toc: true
+    toc-float: true
+    page-layout: full
+    number-sections: true
+    number-depth: 3
+    embed-resources: true
+    code-fold: false
+    code-tools: true
+    code-summary: "Show the code"
+    code-line-numbers: true
+    code-block-border-left: "#ccc"
+    code-copy: true
+    highlight-style: atom-one
+    theme: [default, resources/style.scss]
+    css: resources/style.css
+crossref:
+  fig-title: '**Figure**'
+  fig-labels: arabic
+  tbl-title: '**Table**'
+  tbl-labels: arabic
+engine: knitr
+bibliography: resources/references.bib
+output_dir: "docs"
+---
+
+```{r setup, include=FALSE, warnings=FALSE, message=FALSE}
+assignInNamespace('.sep.label',  "^\\ *(#|--)+\\s*(@knitr|----+)(.*?)-*\\s*$", ns='knitr')
+
+tidyverse_style_with_comments_removed <- function() {
+  remove_comments <- function(pd) {
+    is_comment <- pd$token == "COMMENT"
+    pd <- pd[!is_comment,]
+    pd
+  }
+  tidyverse_with_comments_removed <- styler::tidyverse_style()
+  tidyverse_with_comments_removed$token$remove_comments <- remove_comments
+  tidyverse_with_comments_removed
+}
+
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE,cache.lazy = FALSE, tidy='styler',
+                      tidy.opts=list(transformers = tidyverse_style_with_comments_removed()))
+## knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+
+# save the built-in output hook
+hook_output <- knitr::knit_hooks$get("output")
+
+# set a new output hook to truncate text output
+knitr::knit_hooks$set(output = function(x, options) {
+  if (!is.null(n <- options$out.lines)) {
+    x <- xfun::split_lines(x)
+    if (length(x) > n) {
+      # truncate the output
+      x <- c(head(x, n), "....\n")
+    }
+    x <- paste(x, collapse = "\n")
+  }
+  hook_output(x, options)
+})
+options(tinytex.engine = 'xelatex')
+knitr::read_chunk('../R/05_configure_project.R')
+knitr::read_chunk('../R/10_read_data.R')
+knitr::read_chunk('../R/15_validate_data.R')
+knitr::read_chunk('../R/20_process_data.R')
+INCLUDE_FIGURES <- TRUE
+```
+
+# Synopsis
+
+Question is how do environmental (eReefs WQ) and spatial predictors
+determine the erosion and accretion of reef carbonate blocks deployed
+for 3 years.
+
+Data structure: 12 reefs in 4 regions (9 MMP reefs plus 3 offshore
+reefs), each region has WQ gradient. Each reef has 2 depth. Each depth
+had 7ish bioerosion blocks. We have many response variables, but all
+data have the same structure. We find strong responses to WQ in most
+responses, mostly because there are few grazing fishes in turbid water
+that are chewing on the blocks.
+
+We also have info on the biota growing on the blocks (turf algae,
+sponges etc), and their rates of metabolism (calcification,
+respiration, photosynthesis), and want to know whether that further
+affects how much they eroded.
+ 
+# Preparations
+
+1. Load necessary packages
+
+```{r}
+#| label: load_libraries
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+2. Define global path variables
+
+```{r}
+#| label: define global variables
+#| results: markup
+#| eval: true
+#| echo: true
+#| cache: false
+```
+
+3. Setup paths
+
+```{r}
+#| label: setup_directories
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+# Import data
+
+The data were provided as a single flat csv file by Katharina
+Fabricius via email on 12/10/2024.
+
+```{r}
+#| label: import data
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+# Validate the input data
+
+::: {.callout-note collapse="true"}
+## Expand for information about the validation rules
+```{r}
+#| label: make rules
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+:::
+
+```{r}
+#| label: validate
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+```{r}
+#| label: tbl-validation
+#| tbl-cap: Summary of failed rules.  Each row represents a single row (a description of which is presented in the first column and this description typically indicates a column of the data that the test applies to) and the number of individual tests are listed in the "items" field.  For rows that have more than one item, it implies that the test is applied "row-wise" (that is individualy to each record in the field).
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+validation_results <- readRDS(file = paste0(DATA_PATH, "primary/validation_results.rds"))
+if (any(validation_results$summary$fails > 0)) {
+    validation_results$summary |>
+        dplyr::filter(fails > 0) |>
+        knitr::kable() |>
+        print()
+}
+```
+
+::: {.callout-note collapse="true"}
+## Expand for a view of the rows that violate the rules
+```{r}
+#| label: violating rows
+#| results: asis
+#| eval: true
+#| echo: true
+#| cache: false
+validation_results$violating |>
+    knitr::kable() |>
+    print()
+```
+:::
+
+
+# Process the data
+
+```{r}
+#| label: load_data
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+```{r}
+#| label: save_data
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
