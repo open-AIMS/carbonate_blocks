@@ -88,6 +88,7 @@ eda <- eda |>
       cap <- paste0(response, " against ", covariate, " bla bla bla")
     }
   )) 
+save(eda, file = paste0(DATA_PATH, "processed/eda.rds"))
 ## ----end
 
 eda[1, "gg"][[1]][[1]]
