@@ -136,6 +136,19 @@ Fabricius via email on 12/10/2024.
 #| cache: false
 ```
 
+Import the units and purpose of each variable. These are an extract
+from the spreadsheet Katharina provided via email 18/10/2024.
+
+```{r}
+#| label: import units 
+#| results: markup
+#| eval: true
+#| echo: true
+#| cache: false
+```
+
+
+
 # Validate the input data
 
 ::: {.callout-note collapse="true"}
