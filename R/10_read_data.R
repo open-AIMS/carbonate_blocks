@@ -5,5 +5,5 @@ saveRDS(dat, paste0(DATA_PATH, "primary/dat.rds"))
 
 ## ---- import units
 units <- read_csv(paste0(RAW_DATA_PATH, "Variable dictionary for Blocks - shortened.csv"))
-saveRDS(dat, paste0(DATA_PATH, "primary/units.rds"))
+saveRDS(units, paste0(DATA_PATH, "primary/units.rds"))
 ## ----end

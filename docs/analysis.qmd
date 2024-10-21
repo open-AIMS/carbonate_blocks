@@ -213,6 +213,14 @@ validation_results$violating |>
 ```
 
 ```{r}
+#| label: load_units
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+```{r}
 #| label: save_data
 #| results: markup
 #| eval: false
