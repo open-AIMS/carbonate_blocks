@@ -98,7 +98,7 @@ affects how much they eroded.
 ```{r}
 #| label: load_libraries
 #| results: markup
-#| eval: false
+#| eval: true
 #| echo: true
 #| cache: false
 ```
@@ -229,3 +229,60 @@ validation_results$violating |>
 ```
 
 # Exploratory data analysis
+
+```{r}
+#| label: read_rds 
+#| results: markup
+#| eval: true
+#| echo: true
+#| cache: false
+eda <- readRDS(file = paste0(DATA_PATH, "processed/eda.rds"))
+variables <- readRDS(paste0(DATA_PATH, "processed/variables.rds"))
+```
+
+The following set of tabs list each of the responses. Nested within
+each tab there is a second level of tabs that represent each of the
+candidate covariates. Inside this second level of covariate tabs there
+is a figure representing the simple association between the response
+and covariate.
+
+```{r}
+#| label: eda tab loop
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+cat("::: {.panel-tabset}\n\n")
+
+walk(.x = unique(eda$responses), 
+  .f = ~ {
+    response <- .x
+    response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
+    cat(paste0("## ", response_label, "\n"))
+    cat(":::: {.panel-tabset}\n\n")
+    walk(unique(eda$covariates),
+      .f = ~ {
+        covariate <- .x
+        covariate_label <- str_replace(variables$covariates[covariate], "\\(.*\\)", "")
+        cat(paste0("### ", covariate_label, "\n\n"))
+        fig <- eda |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(fig) |>
+            str_replace("pdf", "png")
+        cap <- eda |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(cap)
+        cat(paste0("![", cap, "](", fig, "){#fig-",response, "_", covariate, " width='600px'}\n\n"))
+      }
+    )
+    cat("::::\n")
+  }
+)
+cat(":::\n")
+```
