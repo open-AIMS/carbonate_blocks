@@ -1,3 +1,6 @@
+# Setup working directory (Julie)
+#setwd(dirname(.vsc$rstudioapi_env$getSourceEditorContext()$path))
+
 ## Configure project
 source("05_configure_project.R")
 
