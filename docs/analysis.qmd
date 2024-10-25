@@ -401,7 +401,7 @@ cat(":::\n")
 knitr::include_graphics(paste0(FIGURES_PATH, "correlation_responses.png"))
 ```
 
-## Correlation betwlibraryeen covariates 
+## Correlation between covariates 
 
 ```{r, width='200px'}
 #| label: corr_cov
