@@ -201,7 +201,6 @@ validation_results$violating |>
 ```
 :::
 
-
 # Process the data
 
 ```{r}
@@ -230,21 +229,22 @@ validation_results$violating |>
 
 # Exploratory data analysis
 
+The following set of tabs list each of the responses. Nested within
+each tab there is a second level of tabs that represent each of the
+candidate covariates. Inside this second level of covariate tabs there
+is a figure representing the simple association between the response
+and covariate.
+
+## All data
 ```{r}
 #| label: read_rds 
 #| results: markup
 #| eval: true
 #| echo: true
 #| cache: false
-eda <- readRDS(file = paste0(DATA_PATH, "processed/eda.rds"))
+eda_all <- readRDS(file = paste0(DATA_PATH, "processed/eda_all.rds"))
 variables <- readRDS(paste0(DATA_PATH, "processed/variables.rds"))
 ```
-
-The following set of tabs list each of the responses. Nested within
-each tab there is a second level of tabs that represent each of the
-candidate covariates. Inside this second level of covariate tabs there
-is a figure representing the simple association between the response
-and covariate.
 
 ```{r}
 #| label: eda tab loop
@@ -254,25 +254,25 @@ and covariate.
 #| cache: false
 cat("::: {.panel-tabset}\n\n")
 
-walk(.x = unique(eda$responses), 
+walk(.x = unique(eda_all$responses), 
   .f = ~ {
     response <- .x
     response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
     cat(paste0("## ", response_label, "\n"))
     cat(":::: {.panel-tabset}\n\n")
-    walk(unique(eda$covariates),
+    walk(unique(eda_all$covariates),
       .f = ~ {
         covariate <- .x
         covariate_label <- str_replace(variables$covariates[covariate], "\\(.*\\)", "")
         cat(paste0("### ", covariate_label, "\n\n"))
-        fig <- eda |>
+        fig <- eda_all |>
             filter(
                 responses == response,
                 covariates == covariate
             ) |>
             pull(fig) |>
             str_replace("pdf", "png")
-        cap <- eda |>
+        cap <- eda_all |>
             filter(
                 responses == response,
                 covariates == covariate
@@ -285,4 +285,142 @@ walk(.x = unique(eda$responses),
   }
 )
 cat(":::\n")
+```
+## By region
+
+```{r}
+#| label: read_rds_region 
+#| results: markup
+#| eval: true
+#| echo: true
+#| cache: false
+eda_region <- readRDS(file = paste0(DATA_PATH, "processed/eda_region.rds"))
+```
+
+```{r}
+#| label: eda tab loop region
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+cat("::: {.panel-tabset}\n\n")
+
+walk(.x = unique(eda_region$responses), 
+  .f = ~ {
+    response <- .x
+    response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
+    cat(paste0("## ", response_label, "\n"))
+    cat(":::: {.panel-tabset}\n\n")
+    walk(unique(eda_region$covariates),
+      .f = ~ {
+        covariate <- .x
+        covariate_label <- str_replace(variables$covariates[covariate], "\\(.*\\)", "")
+        cat(paste0("### ", covariate_label, "\n\n"))
+        fig <- eda_region |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(fig) |>
+            str_replace("pdf", "png")
+        cap <- eda_region |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(cap)
+        cat(paste0("![", cap, "](", fig, "){#fig-",response, "_", covariate, " width='600px'}\n\n"))
+      }
+    )
+    cat("::::\n")
+  }
+)
+cat(":::\n")
+```
+## By reef and depth
+
+```{r}
+#| label: read_rds_reef_depth 
+#| results: markup
+#| eval: true
+#| echo: true
+#| cache: false
+eda_reef_depth <- readRDS(file = paste0(DATA_PATH, "processed/eda_reef_depth.rds"))
+```
+
+```{r}
+#| label: eda tab loop reef and depth
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+cat("::: {.panel-tabset}\n\n")
+
+walk(.x = unique(eda_reef_depth$responses), 
+  .f = ~ {
+    response <- .x
+    response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
+    cat(paste0("## ", response_label, "\n"))
+    cat(":::: {.panel-tabset}\n\n")
+    walk(unique(eda_reef_depth$covariates),
+      .f = ~ {
+        covariate <- .x
+        covariate_label <- str_replace(variables$covariates[covariate], "\\(.*\\)", "")
+        cat(paste0("### ", covariate_label, "\n\n"))
+        fig <- eda_reef_depth |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(fig) |>
+            str_replace("pdf", "png")
+        cap <- eda_reef_depth |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(cap)
+        cat(paste0("![", cap, "](", fig, "){#fig-",response, "_", covariate, " width='600px'}\n\n"))
+      }
+    )
+    cat("::::\n")
+  }
+)
+cat(":::\n")
+```
+
+## Correlation between responses 
+
+```{r, width='200px'}
+#| label: corr_resp
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+#| fig-cap: Correlation between the proposed responses. The plot of correlation matrix uses results from hierarchical clustering.  
+knitr::include_graphics(paste0(FIGURES_PATH, "correlation_responses.png"))
+```
+
+## Correlation betwlibraryeen covariates 
+
+```{r, width='200px'}
+#| label: corr_cov
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+#| fig-cap: Correlation between the proposed covariates. The plot of correlation matrix uses results from hierarchical clustering.   
+knitr::include_graphics(paste0(FIGURES_PATH, "correlation_covariates.png"))
+```
+
+## Summary of responses 
+
+```{r}
+#| label: dat_sum
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+dat_sum <- readRDS(paste0(DATA_PATH, "processed/data_summary.rds"))  
+skim(dat_sum) |> yank("numeric")
 ```

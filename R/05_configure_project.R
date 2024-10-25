@@ -1,6 +1,7 @@
 ## ---- load_libraries
 library(tidyverse)
 library(validate)
+library(skimr)
 source("../R/processing_functions.R")
 ## ----end
 

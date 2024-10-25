@@ -45,12 +45,12 @@ responses <-
 covariates <-
   units |>
   filter(str_detect(purpose, "Covariate")) |>
-  filter(!`Variable name` %in% c("Reef", "Region", "Inshore")) |> 
+  filter(!`Variable name` %in% c("Reef", "Region", "Inshore", "Depth")) |> 
   pull(`Variable name`)
 spatial_covariates <-
   units |>
   filter(str_detect(purpose, "Covariate")) |>
-  filter(`Variable name` %in% c("Reef", "Region", "Inshore")) |>
+  filter(`Variable name` %in% c("Reef", "Region", "Inshore", "Depth")) |>
   pull(`Variable name`)
 
 variables <- list(
