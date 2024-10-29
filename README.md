@@ -7,6 +7,9 @@ The following R packages are required:
 
 - tidyverse
 - validate
+- skimr
+- styler
+- dagitty
 
 # Installation
 

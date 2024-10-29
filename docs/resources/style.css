@@ -17,12 +17,12 @@ body {
   margin-right: -25px;
   border-bottom: solid 2px black;
 }
-.quarto-title {
+/*.quarto-title {
   background: url(../resources/logo1.png) no-repeat;
   background-position-x: 650px;
   background-position-y: -10px;
   background-size: 350px;
-}
+}*/
 
 div.quarto-title-block {
   padding-top: 105px;

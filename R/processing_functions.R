@@ -101,5 +101,4 @@ tidy_validation <- function(result, rules) {
   summary(result) |>
     mutate(description = description(rules)) |>
     dplyr::select(description, everything(), -name, -expression)
-  }
-
+}

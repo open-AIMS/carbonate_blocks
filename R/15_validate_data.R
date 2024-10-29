@@ -124,5 +124,3 @@ if (any(validation_results$summary$fails > 0)) {
   cat("\nPlease see validation_results$violating to explore the failing rows.\n")
   validation_results$violating
 }
-
-
