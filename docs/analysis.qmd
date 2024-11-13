@@ -70,6 +70,7 @@ knitr::read_chunk('../R/05_configure_project.R')
 knitr::read_chunk('../R/10_read_data.R')
 knitr::read_chunk('../R/15_validate_data.R')
 knitr::read_chunk('../R/20_process_data.R')
+knitr::read_chunk('../R/50_simple_models.R')
 INCLUDE_FIGURES <- TRUE
 ```
 
@@ -424,3 +425,240 @@ knitr::include_graphics(paste0(FIGURES_PATH, "correlation_covariates.png"))
 dat_sum <- readRDS(paste0(DATA_PATH, "processed/data_summary.rds"))  
 skim(dat_sum) |> yank("numeric")
 ```
+
+# Simple hierarchical Bayesian models
+
+Start by loading the processed data
+
+```{r}
+#| label: model_load_data
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+Each response might have different characteristics that must be
+considered when assembling a model. So we will create a list of
+configurations that, for each response define:
+
+- `trans`: how to transform the raw data. For example, some responses
+  contain mainly negative values. In order to model them sensibly,
+  they must be transformed to positives (e.g. by multiplication by
+  -1).
+- `do_censor`: whether or not to censor the data. This allows for
+  values that are either below a detection limit or are slightly
+  negative (or zero) in a measure that should otherwise be positive.
+- `flag`: a function that flags values that are lower than detection
+  for censoring
+- `censor`: a function to apply a cutoff to censorred values
+- `family`: the family (and link) to apply in models
+
+```{r}
+#| label: model_configs
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+## Prepare data
+
+Now we will prepare the data for modelling:
+
+- created a nested tibble split with the responses crossed with the
+  covariates
+- limit to just the `volDifferences` response **Remove this step - it
+  is just for testing**
+- compile response/covariate specific data sets that all also contain
+  `Reef` and `Depth`
+- perform any transforms (such as positifying responses and
+  establishing censoring)
+- construct model formula of the form
+
+  $$
+  \begin{align}
+  y_{ijk} &\sim{} dist(\mu_{ijk}, \phi)\\
+  g(\mu_{ijk}) &= \beta_0 + \beta\mathbf{X_{i}} + \upsilon_{reef[j]} + \upsilon_{depth[j,k]}\\
+  \upsilon_{reef[j]} &\sim{} N(0, \sigma^2_{reef})\\
+  \upsilon_{depth[j,k]} &\sim{} N(0, \sigma^2_{depth})\\
+  \end{align}
+  $$
+
+  where $y_{ijk}$ is the $i^{th}$ response in the $k^{th}$ depth
+  within the $i^(th)$ reef, and $dist$ and $g$ represent respectively
+  the family and link functions employed (differ between responses).
+  $\beta_0$ represents the global intercept, $\beta$ is the population
+  effect parameters (associated with the focal covariate, $X$).
+  $\upsilon_{reef}$ and $\upsilon_{depth}$ represent the varying
+  effects of reef and depth within reef respectively.
+  
+- calculate simple summary statistics on which to inform priors
+- make the weakly informative (regularising) priors
+- create an output path suffix
+
+```{r}
+#| label: model_prep
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+## Fit models
+
+```{r}
+#| label: fit_models
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+### Explore sampling diagnostics
+
+
+```{r}
+#| label: sampling diagnostics tab loop
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+
+models_diagnostics <- readRDS(file = paste0(DATA_PATH, "modelled/models_diagnostics.rds"))
+cat("::: {.panel-tabset}\n\n")
+walk(.x = unique(models_diagnostics$responses),
+  .f =  ~ {
+    response <- .x
+    response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
+    cat(paste0("## ", response_label, "\n"))
+    cat(":::: {.panel-tabset}\n\n")
+    walk(unique(models_diagnostics$covariates),
+      .f = ~ {
+        covariate <- .x
+        covariate_label <- str_replace(variables$covariates[covariate], "\\(.*\\)", "")
+        cat(paste0("### ", covariate_label, "\n\n"))
+        cat("::::: {.panel-tabset}\n\n")
+        walk(c("trace", "ac", "rhat", "ess", "dens_overlay"),
+          .f = ~ {
+            type <- .x
+            cat(paste0("#### ", type, "\n\n"))
+            
+            fig <- models_diagnostics |>
+              filter(
+                responses == response,
+                covariates == covariate
+              ) |>
+              pull(diagnostics) |> _[[1]] |> _[[.x]]
+
+            cat(paste0("![", fig[["plot_cap"]], "](", fig[["plot"]], "){#fig-",type,"-",response, "_", covariate, " width='600px'}\n\n"))
+            }
+          )
+        cat("::::\n")
+      }
+      )
+    cat("::::\n")
+    }
+  )
+cat(":::\n")
+```
+
+
+
+
+## Get posteriors
+
+These include:
+
+- `partial` (full marginal posteriors for a sequence of the covariate)
+- `partial_sum` (summarised marginal posteriors for a sequence of the
+  covariate)
+- `eff` (magnitude of effect)
+- `eff_sum` (summarised magnitude of effect)
+- `eff_range` (magnitude of effect over the range of the covariate)
+- `eff_range_sum` (summarised magnitude of effect over the range of
+  the covariate)
+
+```{r}
+#| label: get_posteriors
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+## Partial plots
+
+```{r}
+#| label: partial plot tab loop
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+
+models <- readRDS(file = paste0(DATA_PATH, "modelled/models_phase2.rds"))
+cat("::: {.panel-tabset}\n\n")
+walk(.x = unique(models$responses),
+  .f =  ~ {
+    response <- .x
+    response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
+    cat(paste0("## ", response_label, "\n"))
+    cat(":::: {.panel-tabset}\n\n")
+    walk(unique(models$covariates),
+      .f = ~ {
+        covariate <- .x
+        covariate_label <- str_replace(variables$covariates[covariate], "\\(.*\\)", "")
+        cat(paste0("### ", covariate_label, "\n\n"))
+        fig <- models |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(partials) |>
+            str_replace("pdf", "png")
+        cap <- models |>
+            filter(
+                responses == response,
+                covariates == covariate
+            ) |>
+            pull(partials_cap)
+        cat(paste0("![", cap, "](", fig, "){#fig-partial-",response, "_", covariate, " width='600px'}\n\n"))
+      }
+      )
+    cat("::::\n")
+    }
+  )
+cat(":::\n")
+```
+
+## Comparing effects
+
+```{r}
+#| label: comparing effects plot tab loop
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+
+models_compare <- readRDS(file = paste0(DATA_PATH, "modelled/models_compare.rds"))
+cat("::: {.panel-tabset}\n\n")
+
+walk(.x = unique(models_compare$responses), 
+  .f = ~ {
+    response <- .x
+    response_label <- str_replace(variables$responses[response], "\\(.*\\)", "")
+    cat(paste0("## ", response_label, "\n"))
+    fig <- models_compare |>
+      filter(responses == response) |>
+      pull(effects_plot) |>
+      str_replace("pdf", "png")
+        cap <- models_compare |>
+            filter(responses == response) |>
+            pull(effects_plot_cap)
+        cat(paste0("![", cap, "](", fig, "){#fig-effects-",response, " width='600px'}\n\n"))
+}
+)
+
+cat(":::\n")
+```
+
