@@ -2,7 +2,17 @@
 library(tidyverse)
 library(validate)
 library(skimr)
+library(brms)
+library(rstan)
+library(cmdstanr)
+library(tidybayes)
+library(insight)
+library(bayesplot)
+library(parameters)
+library(HDIntervals)
+library(modelr)
 source("../R/processing_functions.R")
+source("../R/simple_modelling_functions.R")
 ## ----end
 
 ## ---- define global variables
