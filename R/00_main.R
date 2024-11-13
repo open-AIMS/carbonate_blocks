@@ -24,3 +24,8 @@ source("20_process_data.R")
 
 ## EDA
 source("30_eda.R")
+
+## DAGS
+
+## Simple hierarchical modells
+source("50_simple_models.R")
