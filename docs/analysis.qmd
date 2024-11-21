@@ -454,13 +454,17 @@ configurations that, for each response define:
 - `censor`: a function to apply a cutoff to censorred values
 - `family`: the family (and link) to apply in models
 
+::: {.callout-note collapse=true}
+## Expand for a view of model configurations
 ```{r}
 #| label: model_configs
 #| results: markup
-#| eval: false
+#| eval: true
 #| echo: true
 #| cache: false
 ```
+:::
+
 
 ## Prepare data
 
@@ -488,10 +492,15 @@ Now we will prepare the data for modelling:
   where $y_{ijk}$ is the $i^{th}$ response in the $k^{th}$ depth
   within the $i^(th)$ reef, and $dist$ and $g$ represent respectively
   the family and link functions employed (differ between responses).
-  $\beta_0$ represents the global intercept, $\beta$ is the population
-  effect parameters (associated with the focal covariate, $X$).
-  $\upsilon_{reef}$ and $\upsilon_{depth}$ represent the varying
-  effects of reef and depth within reef respectively.
+  $\phi$ represents the family specific shape function (e.g. $\sigma$,
+  variance in the case of a Gaussian family, and shape in the case of
+  a Gamma family). $\beta_0$ represents the global intercept, $\beta$
+  is the population effect parameters (associated with the focal
+  covariate, $X$, which in some cases is transformed to $log + 1$ to
+  even out the skew). $\upsilon_{reef}$ and $\upsilon_{depth}$
+  represent the varying effects of reef and depth within reef
+  respectively.
+  
   
 - calculate simple summary statistics on which to inform priors
 - make the weakly informative (regularising) priors
@@ -504,6 +513,36 @@ Now we will prepare the data for modelling:
 #| echo: true
 #| cache: false
 ```
+
+::: {.callout-note collapse=true}
+## Expand for a view of model characteristics
+```{r}
+#| label: model_configs_table
+#| results: asis
+#| eval: true
+#| echo: false
+#| cache: false
+models <- readRDS(file = paste0(DATA_PATH, "modelled/models.rds"))
+models_tbl <- models |>
+  mutate(formula = map(.x = formula, .f = ~ deparse(.x$formula))) |>
+  mutate(positivise = map(.x = responses,
+    .f =  ~ model_config[[.x]]$trans(1) == -1
+    )) |> 
+  mutate(censor = map(.x = responses,
+    .f =  ~ model_config[[.x]]$do_censor
+    )) |> 
+  mutate(family = map(.x = responses,
+    .f =  ~ model_config[[.x]]$family$family
+    )) |> 
+  mutate(link = map(.x = responses,
+    .f =  ~ model_config[[.x]]$family$link
+    )) |> 
+  dplyr::select(responses, positivise, censor, family, link, covariates, formula) |>
+  unnest(c(formula, positivise, censor, family, link))
+models_tbl |> 
+  knitr::kable()
+```
+:::
 
 ## Fit models
 

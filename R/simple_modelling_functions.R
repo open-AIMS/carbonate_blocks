@@ -19,18 +19,18 @@ model_formula <- function(response, covariate) {
     family = model_config[[response]]$family) 
 }
 
-simple_sums <- function(data, response, covariate) {
+simple_sums <- function(data, response, covariate, family) {
   ## Intercept
   intercept <-
     data |> 
-    summarise(median = median(log(resp), na.rm = TRUE),
-      mad = mad(log(resp), na.rm = TRUE)) |>
+    summarise(median = median(family$linkfun(resp), na.rm = TRUE),
+      mad = mad(family$linkfun(resp), na.rm = TRUE)) |>
     suppressMessages() |>
     suppressWarnings()
   ## variance in Depths within Reefs
   depth_var <- data |> 
     group_by(Reef, Depth) |> 
-    summarise(median = median(log(resp), na.rm = TRUE)) |>
+    summarise(median = median(family$linkfun(resp), na.rm = TRUE)) |>
     ungroup() |>
     group_by(Reef) |> 
     summarise(
@@ -46,7 +46,7 @@ simple_sums <- function(data, response, covariate) {
   ## variance in Reefs
   reef_var <- data |> 
     group_by(Reef) |> 
-    summarise(median = median(log(resp), na.rm = TRUE)) |>
+    summarise(median = median(family$linkfun(resp), na.rm = TRUE)) |>
     ungroup() |>
     summarise(
       mad = mad(median, na.rm = TRUE)) |> 
@@ -56,7 +56,7 @@ simple_sums <- function(data, response, covariate) {
   ## variance in effect
   effect_var <- data |> 
     group_by(Reef) |> 
-    summarise(median = median(log(resp), na.rm = TRUE),
+    summarise(median = median(family$linkfun(resp), na.rm = TRUE),
       cov = median(!!sym(covariate), na.rm = TRUE)) |>
     ungroup() |>
     ## summarise(mad = mad(median)/mad(cov))
@@ -67,14 +67,20 @@ simple_sums <- function(data, response, covariate) {
     effect_var = effect_var)
 }
 
-make_priors <- function(simple_sums) {
-  prior_string(paste0("normal(",
+make_priors <- function(simple_sums, family = "gaussian") {
+  priors <- prior_string(paste0("normal(",
     simple_sums$intercept[["median"]], ", ",
     simple_sums$intercept[["mad"]], ")"), class = "Intercept") +
     prior_string(paste0("student_t(3, 0, ", simple_sums$depth_var, ")"), class = "sd", group = "Reef:Depth") +
     prior_string(paste0("student_t(3, 0, ", simple_sums$reef_var, ")"), class = "sd", group = "Reef") +
-    prior_string(paste0("normal(0, ", simple_sums$effect_var, ")"), class = "b") +
-  prior(gamma(0.01, 0.01), class = shape)
+    prior_string(paste0("normal(0, ", simple_sums$effect_var, ")"), class = "b")
+  if (family == "gaussian") {
+    priors <- priors + prior_string(paste0("student_t(3, 0, ", simple_sums$effect_var, ")"), class = "sigma")
+  }
+  if (family == "gamma") {
+   priors <- priors + prior(gamma(0.01, 0.01), class = "shape")
+  }
+  priors
 }
 
 fit_model <- function(dat, form, priors, path) {
@@ -120,7 +126,7 @@ get_posteriors <- function(data, model, response, back_trans = TRUE) {
     tidybayes::summarise_draws(median, HDInterval::hdi)
   ## magnitude of effect
   eff <- mod |>
-    as_draws_df(variable = paste0("^b_", predictor),
+    as_draws_df(variable = paste0("^b_.*", predictor),
       regex = TRUE) |> 
     mod$family$linkinv()
   if (back_trans) {
@@ -202,8 +208,8 @@ compare_models <- function(models) {
     mutate(effects_plot = pmap(.l = list(data, responses),
       .f = ~ make_effects_plot(..1, ..2)
     )) |>
-    mutate(effects_plot_cap = pmap(.l = list(responses),
-      .f =  ~ paste0("Posterior distributions of effect sizes (change in Y over the range in X) associated with each covariate on ", variables$responses[..1], ". Distributions are coloured according to whether there is evidence of a decline (red), increase (green) or neutral (blue). The x-axis expressess the effect size as a percentage change in the response variable across the range of the covariate. Numbers inside the distributions express effect size as an absolute change in the response over the range of the covariate."))
+    mutate(effects_plot_cap = pmap(.l = list(responses, data),
+      .f =  ~ paste0("Posterior distributions of effect sizes (change in Y over the range in X) associated with each covariate on ", variables$responses[..1], ". Distributions are coloured according to whether there is evidence of a decline (red), increase (green) or neutral (blue). The x-axis expressess the effect size as a ", ifelse(any(is.na(..2$rel_effect)), "absolute", "percentage")," change in the response variable across the range of the covariate. Numbers inside the distributions express effect size as an absolute change in the response over the range of the covariate."))
     )
   models_compare
 }
@@ -214,29 +220,51 @@ make_effects_plot <- function(data, responses) {
   plot_dat <- data |>
     ## filter(!covariates %in% c("cur_mean", "omega_ar.mean")) |> 
     group_by(covariates) |>
-    mutate(Pl = mean(rel_effect < 1),
+    mutate(
+      Pl = mean(rel_effect < 1),
       Pg = mean(rel_effect > 1),
-      flag = ifelse(Pl > 0.9, "decrease", ifelse(Pg > 0.9, "increase", "neutral"))
+      flag = ifelse(Pl > 0.9, "decrease", ifelse(Pg > 0.9, "increase", "neutral")),
+      Pl_a = mean(abs_effect < 0),
+      Pg_a = mean(abs_effect > 0),
+      flag_a = ifelse(Pl_a > 0.9, "decrease", ifelse(Pg_a > 0.9, "increase", "neutral"))
     ) |> 
     ungroup()  
   plot_dat_sum <- plot_dat |>
     group_by(covariates) |>
     summarise(abs_effect = median(abs_effect),
       rel_effect = median(rel_effect))
-  gg <-
-    plot_dat |> 
-    ggplot(aes(x = rel_effect, y = covariates)) +
-    geom_vline(xintercept = 1, linetype = "dashed") +
-    stat_slab(aes(fill = flag, color = flag), linewidth = 0.5, alpha = 0.5, normalize = "groups", show.legend = FALSE) +
-    geom_text(data = plot_dat_sum, aes(x = rel_effect, label = round(abs_effect, 2)), hjust = 0.5, nudge_y = 0.3) +
-    scale_x_continuous("Effect size (% change per unit increase in covariate)",
-      trans = scales::log2_trans(),
-      breaks = c(0.05,0.1, 0.2, 0.5, 1, 2, 3, 6, 11),
-      labels = \(x) 100 * (x -1),
-      limits = c(0.01, 20,000)) +
-    scale_y_discrete("", labels = function(nm) variables$covariates[nm]) +
-    theme_bw() +
-    ggtitle(paste0("Effect of various covariates on ", response))
+  if (any(is.na(plot_dat_sum$rel_effect))) { ## caused by relative change that goes negative
+    gg <-
+      plot_dat |> 
+      ggplot(aes(x = abs_effect, y = covariates)) +
+      geom_vline(xintercept = 0, linetype = "dashed") +
+      stat_slab(aes(fill = flag_a, color = flag_a), linewidth = 0.5, alpha = 0.5, normalize = "groups", show.legend = FALSE) +
+      geom_text(data = plot_dat_sum, aes(x = abs_effect, label = round(abs_effect, 2)), hjust = 0.5, nudge_y = 0.3) +
+      scale_x_continuous("Effect size (absolute change over the range of the covariate)") +
+        ## trans = scales::log2_trans(),
+        ## breaks = c(0.05,0.1, 0.2, 0.5, 1, 2, 3, 6, 11),
+        ## labels = \(x) 100 * (x -1),
+        ## limits = c(0.01, 20,000)) +
+      scale_y_discrete("", labels = function(nm) variables$covariates[nm]) +
+      theme_bw() +
+      ggtitle(paste0("Effect of various covariates on ", response))
+    
+  } else {
+    gg <-
+      plot_dat |> 
+      ggplot(aes(x = rel_effect, y = covariates)) +
+      geom_vline(xintercept = 1, linetype = "dashed") +
+      stat_slab(aes(fill = flag, color = flag), linewidth = 0.5, alpha = 0.5, normalize = "groups", show.legend = FALSE) +
+      geom_text(data = plot_dat_sum, aes(x = rel_effect, label = round(abs_effect, 2)), hjust = 0.5, nudge_y = 0.3) +
+      scale_x_continuous("Effect size (% change over the range of the covariate)",
+        trans = scales::log2_trans(),
+        breaks = c(0.05,0.1, 0.2, 0.5, 1, 2, 3, 6, 11),
+        labels = \(x) 100 * (x -1),
+        limits = c(0.01, 20,000)) +
+      scale_y_discrete("", labels = function(nm) variables$covariates[nm]) +
+      theme_bw() +
+      ggtitle(paste0("Effect of various covariates on ", response))
+  }
   ggsave(filename = path, plot = gg, device = "png", width = 8, height = 4, units = "in", dpi = 300)
   path
 }

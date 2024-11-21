@@ -1,3 +1,4 @@
+source("../R/simple_modelling_functions.R")
 
 ## ---- model_load_data
 dat <- readRDS(paste0(DATA_PATH, "processed/dat.rds"))
@@ -16,7 +17,75 @@ model_config <- list(
     flag = function(x) ifelse(x <= 0, -1, 0),
     censor = function(x) ifelse(x <= 0, 0.01, x),
     family = Gamma(link = "log")
-    )
+    ),
+  densityDifference = list(
+    trans = function(x) 1 * x,
+    do_censor = FALSE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = gaussian(link = "identity")
+  ),
+  erosionGrazing = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  totalErosion = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  accretionCCA = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  totalAccretion = list(
+    trans = function(x) 1 * x,
+    do_censor = FALSE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  Abiotic.Perc =  list(
+    trans_str = "log(Abiotic.Perc + 1)"
+  ),
+  Calc.Perc =  list(
+    trans_str = "Calc.Perc"
+  ),
+  CCA.Perc =  list(
+    trans_str = "CCA.Perc"
+  ),
+  ClaySilt.Percent =  list(
+    trans_str = "log(ClaySilt.Percent + 1)"
+  ),
+  cur_mean =  list(
+    trans_str = "log(cur_mean)"
+  ),
+  MA.Perc =  list(
+    trans_str = "log(MA.Perc + 1)"
+  ),
+  omega_ar.mean =  list(
+    trans_str = "omega_ar.mean"
+  ),
+  Oth.calc.Perc =  list(
+    trans_str = "log(Oth.calc.Perc + 1)"
+  ),
+  Secchi.mean =  list(
+    trans_str = "Secchi.mean"
+  ),
+  TA.Perc =  list(
+    trans_str = "TA.Perc"
+  ),
+  WQ.Ind =  list(
+    trans_str = "WQ.Ind"
+  )
   )
 ## ----end
 
@@ -25,7 +94,14 @@ model_config <- list(
 models <- tibble(responses = names(variables$responses)) |>
   crossing(covariates = names(variables$covariates))
 
-models <- models |> filter(responses == "volDifference")
+models <- models |>
+  ## filter(responses == "volDifference")
+   ## filter(responses == "erosionGrazing")
+  filter(responses %in% c("volDifference", "densityDifference",
+    "erosionGrazing",
+    "totalErosion",
+    "accretionCCA",
+    "totalAccretion"))
 
 models <- models |>
   ## focus the data
@@ -40,14 +116,15 @@ models <- models |>
   )) |>
   ## create the formula
   mutate(formula = map2(.x = responses, .y = covariates,
-    .f = ~ model_formula(.x, .y)
+    ## .f = ~ model_formula(.x, .y)
+    .f = ~ model_formula(.x, model_config[[.y]]$trans_str)
   )) |>
   ## calculate simple sums to inform priors
   mutate(simple_sums = pmap(.l = list(data, responses, covariates),
-    .f = ~ simple_sums(..1, ..2, ..3))) |>
+    .f = ~ simple_sums(..1, ..2, ..3, model_config[[..2]]$family))) |>
   ## create priors
-  mutate(priors = pmap(.l = list(simple_sums),
-    .f = ~ make_priors(..1))) |>
+  mutate(priors = pmap(.l = list(simple_sums, responses),
+    .f = ~ make_priors(..1, model_config[[..2]]$family$family))) |>
   mutate(path = paste0(DATA_PATH, "modelled/", responses, "_", covariates))
 ## ----end
 
