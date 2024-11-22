@@ -24,7 +24,10 @@ simple_sums <- function(data, response, covariate, family) {
   intercept <-
     data |> 
     summarise(median = median(family$linkfun(resp), na.rm = TRUE),
-      mad = mad(family$linkfun(resp), na.rm = TRUE)) |>
+      mad = mad(family$linkfun(resp), na.rm = TRUE),
+      sd = sd(family$linkfun(resp), na.rm = TRUE)) |>
+    mutate(mad = ifelse(mad == 0, sd, mad)) |>
+    dplyr::select(-sd) |> 
     suppressMessages() |>
     suppressWarnings()
   ## variance in Depths within Reefs
@@ -49,7 +52,9 @@ simple_sums <- function(data, response, covariate, family) {
     summarise(median = median(family$linkfun(resp), na.rm = TRUE)) |>
     ungroup() |>
     summarise(
-      mad = mad(median, na.rm = TRUE)) |> 
+      mad = mad(median, na.rm = TRUE),
+      sd = sd(median, na.rm = TRUE)) |>
+    mutate(mad = ifelse(mad == 0, sd, mad)) |>
     pull(mad) |> 
     suppressMessages() |>
     suppressWarnings()
@@ -60,7 +65,10 @@ simple_sums <- function(data, response, covariate, family) {
       cov = median(!!sym(covariate), na.rm = TRUE)) |>
     ungroup() |>
     ## summarise(mad = mad(median)/mad(cov))
-    summarise(mad = mad(median))
+    summarise(mad = mad(median),
+      sd = sd(median)) |> 
+    mutate(mad = ifelse(mad == 0, sd, mad)) |> 
+    dplyr::select(-sd) 
   
   list(intercept = intercept, depth_var = depth_var,
     reef_var = reef_var,

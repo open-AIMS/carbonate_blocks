@@ -8,6 +8,33 @@ units <- readRDS(paste0(DATA_PATH, "primary/units.rds"))
 
 ## Processing steps
 
+## ---- add filter feeders
+dat <- dat |>
+  mutate(erosionFilterFeeders = erosionbivalve + erosionSponge +
+           erosionAnnelid + erosionVermetid,
+    accretionFilterFeeders = accretionBivalve + accretionBryozoan +
+      accretionMollusk + accretionVermetid)
+units <- units |>
+  bind_rows(
+    tibble(
+      `Variable name` = "erosionFilterFeeders",
+      label = "Total of block erosion by filter feeders",
+      unit = "cm3",
+      `Sampling unit` = "block",
+      purpose = "Important Response"
+    ),
+    tibble(
+      `Variable name` = "accretionFilterFeeders",
+      label = "Volume of block accretion by filter feeders",
+      unit = "cm3",
+      `Sampling unit` = "block",
+      purpose = "Important Response"
+    )
+  )
+## ----end
+
+
+
 ## At this point, we should join in a lookup that contains the units
 ## for each of the responses and covariates for use in figures and tables.
 ## I will ask Katharina to supply a txt file with these units

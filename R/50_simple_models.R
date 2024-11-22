@@ -53,6 +53,20 @@ model_config <- list(
     censor = function(x) ifelse(x <= 0, 0.01, x),
     family = Gamma(link = "log")
     ),
+  erosionFilterFeeders = list(
+    trans = function(x) 1 * x,
+    do_censor = FALSE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  accretionFilterFeeders = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
   Abiotic.Perc =  list(
     trans_str = "log(Abiotic.Perc + 1)"
   ),
@@ -97,11 +111,16 @@ models <- tibble(responses = names(variables$responses)) |>
 models <- models |>
   ## filter(responses == "volDifference")
    ## filter(responses == "erosionGrazing")
-  filter(responses %in% c("volDifference", "densityDifference",
+  filter(responses %in% c(
+    "volDifference",
+    "densityDifference",
     "erosionGrazing",
     "totalErosion",
     "accretionCCA",
-    "totalAccretion"))
+    "totalAccretion",
+    "erosionFilterFeeders",
+    "accretionFilterFeeders"
+    ))
 
 models <- models |>
   ## focus the data

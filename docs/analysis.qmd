@@ -220,6 +220,43 @@ validation_results$violating |>
 #| cache: false
 ```
 
+After some reflection on the large number of responses, Katharina has
+decided to rationalise the list a little. Specifically, we are to add
+two additional responses (`erosionsFilterFeeders` and
+`accretionFilterFeeders`) that represent the accumulation of filter
+feeders to erosion and accretion respectively.
+
+```{r}
+#| label: add filter feeders
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+Curate the units supplied by Katharina.
+
+```{r}
+#| label: process units
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+Compile a list of variables (responses and covariates) and
+corresponding pretty labels.
+
+```{r}
+#| label: get variables
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+
+
 ```{r}
 #| label: save_data
 #| results: markup
