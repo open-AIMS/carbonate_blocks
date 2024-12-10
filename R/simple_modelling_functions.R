@@ -114,9 +114,15 @@ fit_model <- function(dat, form, priors, path) {
 get_posteriors <- function(data, model, response, back_trans = TRUE) {
   mod <- readRDS(model)
   predictor <- insight::find_predictors(mod)$conditional
-  newdata <- modelr::data_grid(data,
-    !!sym(predictor) :=  modelr::seq_range(!!sym(predictor), 100)) |>
-    mutate(Reef = NA, Depth = NA)
+  if (predictor != "Depth") {
+    newdata <- modelr::data_grid(data,
+      !!sym(predictor) :=  modelr::seq_range(!!sym(predictor), 100)) |>
+      mutate(Reef = NA, Depth = NA)
+  } else {
+    newdata <- modelr::data_grid(data,
+      !!sym(predictor) :=  !!sym(predictor)) |>
+      mutate(Reef = NA)
+  }
   ## marginal partial posteriors
   partial <- add_epred_draws(newdata, mod,
     re_formula = NULL,
@@ -190,7 +196,7 @@ make_partial_plots <- function(data, mod, partial_sum, response, path) {
     geom_ribbon(aes(ymin = lower, ymax = upper), fill = "orange", alpha = 0.2) +
     coord_cartesian() +
     scale_x_continuous(name = variables$covariates[[predictor]]) +
-    scale_y_continuous(name = variables$responses[[response]], expand = c(0,0)) + 
+    scale_y_continuous(name = str_wrap(variables$responses[[response]], 40), expand = c(0,0)) + 
     ## scale_y_log10() +
     theme_classic()
   path <- paste0(str_replace(path,
@@ -236,7 +242,12 @@ make_effects_plot <- function(data, responses) {
       Pg_a = mean(abs_effect > 0),
       flag_a = ifelse(Pl_a > 0.9, "decrease", ifelse(Pg_a > 0.9, "increase", "neutral"))
     ) |> 
-    ungroup()  
+    ungroup() |>
+    mutate(covariates = factor(covariates,
+      levels = rev(c("Depth", "Secchi.mean", "ClaySilt.Percent", "WQ.Ind", "omega_ar.mean",
+        "cur_mean", "CCA.Perc", "MA.Perc", "TA.Perc", "Abiotic.Perc", "Calc.Perc",
+        "Oth.calc.Perc", "preCTDensity"
+        ))))
   plot_dat_sum <- plot_dat |>
     group_by(covariates) |>
     summarise(abs_effect = median(abs_effect),

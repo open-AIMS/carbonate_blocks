@@ -224,10 +224,24 @@ After some reflection on the large number of responses, Katharina has
 decided to rationalise the list a little. Specifically, we are to add
 two additional responses (`erosionsFilterFeeders` and
 `accretionFilterFeeders`) that represent the accumulation of filter
-feeders to erosion and accretion respectively.
+feeders to erosion and accretion respectively. On yet further
+reflection, Katharina requested that we add `weigthDifference` as
+(`postweightClean` - `preweightEpoxied`).
 
 ```{r}
 #| label: add filter feeders
+#| results: markup
+#| eval: false
+#| echo: true
+#| cache: false
+```
+
+Also after an initial run of the analyses, Katharina requested that
+both erosion and accretion values be expressed per area of reef and
+per 3 years.  
+
+```{r}
+#| label: standardise
 #| results: markup
 #| eval: false
 #| echo: true
@@ -507,7 +521,7 @@ configurations that, for each response define:
 
 Now we will prepare the data for modelling:
 
-- created a nested tibble split with the responses crossed with the
+- create a nested tibble split with the responses crossed with the
   covariates
 - limit to just the `volDifferences` response **Remove this step - it
   is just for testing**
@@ -538,10 +552,13 @@ Now we will prepare the data for modelling:
   represent the varying effects of reef and depth within reef
   respectively.
   
-  
+- the one exception to the model formula is above, is when modelling
+  depth itself. In this situation, depth is added as the focal
+  covariate (as a population effect) and removed as a varying effect.
 - calculate simple summary statistics on which to inform priors
 - make the weakly informative (regularising) priors
-- create an output path suffix
+- create an output path suffix.  
+
 
 ```{r}
 #| label: model_prep

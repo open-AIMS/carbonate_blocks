@@ -223,6 +223,7 @@ saveRDS(eda_region, file = paste0(DATA_PATH, "processed/eda_region.rds"))
 
 ### By reef and depth
 eda_reef_depth <- eda |>
+  filter(covariates != "Depth") |> 
   mutate(
     n = 1:n(),
     N = n()
@@ -289,7 +290,7 @@ saveRDS(eda_reef_depth, file = paste0(DATA_PATH, "processed/eda_reef_depth.rds")
 library(corrplot)
 dat_cov <- dat |>
 dplyr::select(names(variables$covariates)) |>
-cor()
+cor(use="complete.obs")
 
 png(file = paste0(FIGURES_PATH, "correlation_covariates.png"),
         width = 200, height = 200, units='mm', res = 150)

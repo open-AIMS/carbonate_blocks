@@ -32,11 +32,25 @@ model_config <- list(
     censor = function(x) ifelse(x <= 0, 0.01, x),
     family = Gamma(link = "log")
     ),
+  erosionGrazing_s = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 1, x),
+    family = Gamma(link = "log")
+    ),
   totalErosion = list(
     trans = function(x) 1 * x,
     do_censor = TRUE,
     flag = function(x) ifelse(x <= 0, -1, 0),
     censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  totalErosion_s = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 1, x),
     family = Gamma(link = "log")
     ),
   accretionCCA = list(
@@ -46,11 +60,25 @@ model_config <- list(
     censor = function(x) ifelse(x <= 0, 0.01, x),
     family = Gamma(link = "log")
     ),
+  accretionCCA_s = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.1, x),
+    family = Gamma(link = "log")
+    ),
   totalAccretion = list(
     trans = function(x) 1 * x,
     do_censor = FALSE,
     flag = function(x) ifelse(x <= 0, -1, 0),
     censor = function(x) ifelse(x <= 0, 0.01, x),
+    family = Gamma(link = "log")
+    ),
+  totalAccretion_s = list(
+    trans = function(x) 1 * x,
+    do_censor = FALSE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 1, x),
     family = Gamma(link = "log")
     ),
   erosionFilterFeeders = list(
@@ -60,12 +88,33 @@ model_config <- list(
     censor = function(x) ifelse(x <= 0, 0.01, x),
     family = Gamma(link = "log")
     ),
+  erosionFilterFeeders_s = list(
+    trans = function(x) 1 * x,
+    do_censor = FALSE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 0.1, x),
+    family = Gamma(link = "log")
+    ),
   accretionFilterFeeders = list(
     trans = function(x) 1 * x,
     do_censor = TRUE,
     flag = function(x) ifelse(x <= 0, -1, 0),
     censor = function(x) ifelse(x <= 0, 0.01, x),
     family = Gamma(link = "log")
+    ),
+  accretionFilterFeeders_s = list(
+    trans = function(x) 1 * x,
+    do_censor = TRUE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 1, x),
+    family = Gamma(link = "log")
+    ),
+  weightDifference = list(
+    trans = function(x) 1 * x,
+    do_censor = FALSE,
+    flag = function(x) ifelse(x <= 0, -1, 0),
+    censor = function(x) ifelse(x <= 0, 1, x),
+    family = gaussian(link = "identity")
     ),
   Abiotic.Perc =  list(
     trans_str = "log(Abiotic.Perc + 1)"
@@ -99,6 +148,12 @@ model_config <- list(
   ),
   WQ.Ind =  list(
     trans_str = "WQ.Ind"
+  ),
+  preCTDensity =  list(
+    trans_str = "preCTDensity"
+  ),
+  Depth =  list(
+    trans_str = "factor(Depth)"
   )
   )
 ## ----end
@@ -114,12 +169,13 @@ models <- models |>
   filter(responses %in% c(
     "volDifference",
     "densityDifference",
-    "erosionGrazing",
-    "totalErosion",
-    "accretionCCA",
-    "totalAccretion",
-    "erosionFilterFeeders",
-    "accretionFilterFeeders"
+    "erosionGrazing_s",
+    "totalErosion_s",
+    "accretionCCA_s",
+    "totalAccretion_s",
+    "erosionFilterFeeders_s",
+    "accretionFilterFeeders_s",
+    "weightDifference"
     ))
 
 models <- models |>
